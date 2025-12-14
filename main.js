@@ -92,112 +92,112 @@ export function generateEmployeeData(dtoIn) {
   return employees;
 }
 
-// Štatistiky – úloha č. 4
+// Vytváranie štatistík zamestnancov - úloha č. 4
 export function getEmployeeStatistics(employees) {
 
   let total = employees.length;
 
-  // Počty úväzkov
+  // počty úväzkov za týždeň
   let workload10 = 0;
   let workload20 = 0;
   let workload30 = 0;
   let workload40 = 0;
 
-  // Veky
-  let sumAge = 0;
-  let minAge = Infinity;
-  let maxAge = -Infinity;
+  // vek 
+  let minAgeDec = Infinity;
+  let maxAgeDec = -Infinity;
 
-  // Úväzky žien
+  // týždenný úväzok žien
   let sumWomenWorkload = 0;
   let countWomen = 0;
 
-  // Polia pre mediány
+  // polia pre mediány
   let ages = [];
   let workloads = [];
 
   for (let i = 0; i < employees.length; i++) {
     let e = employees[i];
 
-    // Počítanie úväzkov
+    // počítadlo úväzkov
     if (e.workload === 10) workload10++;
     if (e.workload === 20) workload20++;
     if (e.workload === 30) workload30++;
     if (e.workload === 40) workload40++;
 
-    // Výpočet veku 
-    let age = getAgeFromIso(e.birthdate);
+    // vek zamestnanca z ISO dátumu narodenia (desatinný vek)
+    let age = getAgeFromIsoDecimal(e.birthdate);
 
-    sumAge += age;
+    sumAge = sumAge + age;
+
     ages.push(age);
     workloads.push(e.workload);
 
-    if (age < minAge) minAge = age;
-    if (age > maxAge) maxAge = age;
+    if (age < minAgeDec) minAgeDec = age;
+    if (age > maxAgeDec) maxAgeDec = age;
 
     if (e.gender === "female") {
-      sumWomenWorkload += e.workload;
-      countWomen++;
+      sumWomenWorkload = sumWomenWorkload + e.workload;
+      countWomen = countWomen + 1;
     }
   }
 
-  // Priemerný vek 
-  let averageAge = Math.round((sumAge / total) * 10) / 10;
+  // priemer veku 
+  let averageAge = sumAge / total;
+  averageAge = roundTo1Decimal(averageAge);
 
-  // Medián veku 
-  let medianAge = Math.round(getMedian(ages));
+  // min/max vek 
+  let minAge = Math.round(minAgeDec);
+  let maxAge = Math.round(maxAgeDec);
 
-  // Medián úväzkov 
-  let medianWorkload = getMedian(workloads);
+  // medián veku 
+  let medianAge = medianClassic(ages);
+  medianAge = Math.round(medianAge);
 
-  // Priemer úväzku žien
+  // medián úväzkov (klasický medián – pri párnom priemer dvoch stredných)
+  let medianWorkload = medianClassic(workloads);
+
+  // priemer úväzku žien (0 ak nie sú ženy)
   let averageWomenWorkload = 0;
   if (countWomen > 0) {
-    averageWomenWorkload = Math.round((sumWomenWorkload / countWomen) * 10) / 10;
+    averageWomenWorkload = sumWomenWorkload / countWomen;
+    averageWomenWorkload = roundTo1Decimal(averageWomenWorkload);
   }
 
-  // Zoradenie podľa úväzku
-  let sortedByWorkload = employees.slice().sort((a, b) => a.workload - b.workload);
+  // triedenie podľa úväzku 
+  let sortedByWorkload = employees.slice();
+  sortedByWorkload.sort(function (a, b) {
+    return a.workload - b.workload;
+  });
 
-  return {
-    total,
-    workload10,
-    workload20,
-    workload30,
-    workload40,
-    averageAge,
-    minAge,
-    maxAge,
-    medianAge,
-    medianWorkload,
-    averageWomenWorkload,
-    sortedByWorkload
+  let dtoOut = {
+    total: total,
+    workload10: workload10,
+    workload20: workload20,
+    workload30: workload30,
+    workload40: workload40,
+    averageAge: averageAge,
+    minAge: minAge,
+    maxAge: maxAge,
+    medianAge: medianAge,
+    medianWorkload: medianWorkload,
+    averageWomenWorkload: averageWomenWorkload,
+    sortedByWorkload: sortedByWorkload
   };
+
+  return dtoOut;
 }
 
+// pomocné funkcie
 
-// Pomocné funkcie
-// Výpočet veku
-function getAgeFromIso(iso) {
-  const birth = new Date(iso);
-  const today = new Date();
+// vek z ISO dátumu narodenia
+function getAgeFromIsoDecimal(iso) {
+  let birth = new Date(iso);
+  birth.setUTCHours(0, 0, 0, 0);
 
-  let age = today.getUTCFullYear() - birth.getUTCFullYear();
-  const m = today.getUTCMonth() - birth.getUTCMonth();
+  let today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
 
-  if (m < 0 || (m === 0 && today.getUTCDate() < birth.getUTCDate())) {
-    age--;
-  }
-  return age;
-}
-
-// Klasický medián
-function getMedian(arr) {
-  let a = arr.slice().sort((x, y) => x - y);
-  let mid = Math.floor(a.length / 2);
-
-  if (a.length % 2 === 1) {
-    return a[mid];
-  }
-  return (a[mid - 1] + a[mid]) / 2;
+  let diffMs = today.getTime() - birth.getTime();
+  let years = diffMs / (365.25 * 24 * 60 * 60 * 1000);
+  return years;
 }

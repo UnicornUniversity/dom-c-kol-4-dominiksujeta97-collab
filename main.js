@@ -15,38 +15,47 @@ function generateEmployeeData(dtoIn) {
   let ageMin = dtoIn.age.min;
   let ageMax = dtoIn.age.max;
 
-  //Zoznam náhodných mužských mien (25) + ženských mien (25)
+  //Zoznam náhodných mužských mien 
   let maleNames = [
-    "Peter", "Martin", "Jakub", "Samuel", "Lukas",
-    "Michal", "Adam", "Tomas", "Matej", "Dominik",
-    "Filip", "Patrik", "Andrej", "Daniel", "Erik",
-    "Oliver", "Marek", "Sebastian", "Viktor", "Roman",
-    "Juraj", "Robert", "Stefan", "Milan", "Pavol"
+    "Peter", "Martin", "Jakub", "Samuel", "Lukas", "Michal", "Adam", "Tomas", "Matej", "Dominik",
+    "Filip", "Patrik", "Andrej", "Daniel", "Erik", "Oliver", "Marek", "Sebastian", "Viktor", "Roman",
+    "Rastislav", "Boris", "Jan", "Simon", "David", "Karol", "Igor", "Norbert", "Gabriel", "Henrich",
+    "Juraj", "Robert", "Stefan", "Milan", "Pavol", "Ladislav", "Radovan", "Jaroslav", "Lubomir", "Alojz",
+    "Vladimir", "Richard", "Marian", "Alexej", "Teodor", "Eduard", "Arpad", "Frantisek", "Ondrej", "Mateo"
   ];
 
+  //Zoznam náhodných ženských mien 
   let femaleNames = [
-    "Lucia", "Kristina", "Natalia", "Ema", "Sofia",
-    "Laura", "Monika", "Zuzana", "Veronika", "Katarina",
-    "Eva", "Maria", "Barbora", "Petra", "Simona",
-    "Nikola", "Tamara", "Viktoria", "Paulina", "Lenka",
-    "Jana", "Ivana", "Michaela", "Andrea", "Denisa"
+    "Lucia", "Kristina", "Natalia", "Ema", "Sofia", "Laura", "Monika", "Zuzana", "Veronika", "Katarina",
+    "Eva", "Maria", "Barbora", "Petra", "Simona", "Nikola", "Tamara", "Viktoria", "Paulina", "Lenka",
+    "Jana", "Ivana", "Michaela", "Andrea", "Denisa", "Alena", "Martina", "Dominika", "Alexandra", "Patricia",
+    "Klaudia", "Nina", "Karina", "Adriana", "Helena", "Renata", "Tatiana", "Silvia", "Elena", "Olivia",
+    "Timea", "Dorota", "Aneta", "Beata", "Bianka", "Emilia", "Magdalena", "Stela", "Diana", "Viera"
   ];
 
-  //Zoznam náhodných mužských priezvisk (25) + ženských priezvisk (25) 
+  //Zoznam náhodných mužských priezvisk 
   let maleSurnames = [
-    "Novak", "Kovac", "Horvath", "Varga", "Toth",
-    "Kucera", "Marek", "Urban", "Simek", "Kral",
-    "Klement", "Farkas", "Klein", "Hruska", "Sokol",
-    "Baran", "Roth", "Hlavac", "Polak", "Ford",
-    "Keller", "Berger", "Cerny", "Bielik", "Nemec"
+    "Novak", "Kovac", "Horvath", "Varga", "Toth", "Kucera", "Marek", "Bartok", "Urban", "Simek",
+    "Kral", "Klement", "Farkas", "Klein", "Hruska", "Sokol", "Baran", "Roth", "Hlavac", "Polak",
+    "Ford", "Keller", "Berger", "Cerny", "Bielik",
+    "Molnar", "Balaz", "Kadlec", "Nemec", "Pavlik",
+    "Blaha", "Svoboda", "Dvorak", "Kratochvil", "Sedlak",
+    "Benko", "Bartos", "Chovanec", "Jelinek", "Kolar",
+    "Kostka", "Mikulas", "Zeman", "Stanek", "Kriz"
   ];
 
+  //Zoznam náhodných ženských priezvisk 
   let femaleSurnames = [
     "Novakova", "Kovacova", "Horvathova", "Vargova", "Tothova",
-    "Kucerova", "Markova", "Urbanova", "Simkova", "Kralova",
-    "Klementova", "Farkasova", "Kleinova", "Hruskova", "Sokolova",
-    "Baranova", "Rothova", "Hlavacova", "Polakova", "Nemcova",
-    "Bielikova", "Cernyova", "Bergerova", "Kellerova", "Fordova"
+    "Kucerova", "Markova", "Bartosova", "Urbanova", "Simkova",
+    "Kralova", "Klementova", "Farkasova", "Kleinova", "Hruskova",
+    "Sokolova", "Baranova", "Rothova", "Hlavacova", "Polakova",
+    "Molnarova", "Balazova", "Kadlecova", "Nemcova", "Pavlikova",
+    "Blahova", "Svobodova", "Dvorakova", "Kratochvilova", "Sedlakova",
+    "Benkova", "Bartosova2", "Chovancova", "Jelinekova", "Kolarova",
+    "Kostkova", "Mikulasova", "Zemanova", "Stankova", "Krizova",
+    "Krejcova", "Pokorna", "Vesela", "Prochazkova", "Holubova",
+    "Ruzickova", "Rybarova", "Liskova", "Kovacikova", "Stanekova"
   ];
 
   //Možný pracovný úväzok
@@ -70,12 +79,25 @@ function generateEmployeeData(dtoIn) {
 
   //Funkcia na generovanie jedinečného dátumu narodenia v zadanom vekovom rozmedzí
   //Prevod do ISO formátu
+  // (robím to cez náhodný dátum medzi hranicami, aby testy vždy sedeli)
   function generateBirthdate(minAge, maxAge) {
     while (true) {
-      let age = minAge + Math.random() * (maxAge - minAge);
+      let now = new Date();
 
-      let diffMs = age * 365.25 * 24 * 60 * 60 * 1000;
-      let birthday = new Date(Date.now() - diffMs);
+      // najstarší povolený (maxAge rokov dozadu)
+      let oldest = new Date(now);
+      oldest.setUTCFullYear(oldest.getUTCFullYear() - maxAge);
+
+      // najmladší povolený (minAge rokov dozadu)
+      let youngest = new Date(now);
+      youngest.setUTCFullYear(youngest.getUTCFullYear() - minAge);
+
+      // náhodný čas medzi oldest a youngest
+      let minTime = oldest.getTime();
+      let maxTime = youngest.getTime();
+      let randomTime = minTime + Math.random() * (maxTime - minTime);
+
+      let birthday = new Date(randomTime);
       birthday.setUTCHours(0, 0, 0, 0);
 
       let iso = birthday.toISOString();
@@ -207,7 +229,17 @@ function getEmployeeStatistics(employees) {
   }
 
   // zoznam zamestnancov zotriedený podľa výšky úväzku od najmenšieho po najväčší
-  let sortedByWorkload = employees.slice();
+  // (kopírujem aj objekty, aby som nemal referencie na pôvodné)
+  let sortedByWorkload = employees.map(function (e) {
+    return {
+      gender: e.gender,
+      birthdate: e.birthdate,
+      name: e.name,
+      surname: e.surname,
+      workload: e.workload
+    };
+  });
+
   sortedByWorkload.sort(function (a, b) {
     return a.workload - b.workload;
   });

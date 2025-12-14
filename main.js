@@ -168,8 +168,8 @@ export function getEmployeeStatistics(employees) {
   averageAge = roundTo1Decimal(averageAge);
 
   // min/max vek (podľa zadania zaokrúhlené na celé čísla)
-  minAge = Math.round(minAge);
-  maxAge = Math.round(maxAge);
+  minAge = Math.floor(minAge);
+  maxAge = Math.floor(maxAge);
 
   // median veku 
   let medianAge = medianClassic(ages);
@@ -185,7 +185,7 @@ export function getEmployeeStatistics(employees) {
     averageWomenWorkload = roundTo1Decimal(averageWomenWorkload);
   }
 
-  // triedenie podľa úväzku (nesmie meniť originál)
+  // triedenie podľa úväzku
   let sortedByWorkload = employees.slice();
   sortedByWorkload.sort(function (a, b) {
     return a.workload - b.workload;
@@ -211,12 +211,26 @@ export function getEmployeeStatistics(employees) {
 
 // pomocné funkcie
 
-// vek z ISO dátumu narodenia
+// vek z ISO dátumu narodenia (UTC, celé roky)
 function getAgeFromIso(iso) {
-  let d = new Date(iso);
-  let diffMs = Date.now() - d.getTime();
-  let years = diffMs / (365.25 * 24 * 60 * 60 * 1000);
-  return years;
+  let birth = new Date(iso);
+  let today = new Date();
+
+  let birthY = birth.getUTCFullYear();
+  let birthM = birth.getUTCMonth();
+  let birthD = birth.getUTCDate();
+
+  let todayY = today.getUTCFullYear();
+  let todayM = today.getUTCMonth();
+  let todayD = today.getUTCDate();
+
+  let age = todayY - birthY;
+
+  if (todayM < birthM || (todayM === birthM && todayD < birthD)) {
+    age = age - 1;
+  }
+
+  return age;
 }
 
 function roundTo1Decimal(x) {

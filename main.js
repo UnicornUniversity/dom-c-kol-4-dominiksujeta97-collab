@@ -173,12 +173,12 @@ export function getEmployeeStatistics(employees) {
   let minAge = Math.floor(minAgeDec);
   let maxAge = Math.floor(maxAgeDec);
 
-  // median veku (celé číslo)
+  // median veku 
   let medianAge = medianClassic(ages);
   medianAge = Math.round(medianAge);
 
-  // median pre úväzky (musí byť celé číslo -> dolný stred)
-  let medianWorkload = medianLowerMiddle(workloads);
+  // median pre úväzky (klasický medián – pri párnom priemer dvoch stredných)
+  let medianWorkload = medianClassic(workloads);
 
   // priemer úväzku žien (0 ak nie sú ženy)
   let averageWomenWorkload = 0;

@@ -127,17 +127,17 @@ export function getEmployeeStatistics(employees) {
   let workload40 = 0;
 
   // vek
-  let sumAge = 0;
-  let minAgeDec = null;
-  let maxAgeDec = null;
+  let sumAge = 0;          
+  let minAge = null;       
+  let maxAge = null;       
 
   // týždenný úväzok žien
   let sumWomenWorkload = 0;
   let countWomen = 0;
 
   // polia pre mediány
-  let ages = [];
-  let workloads = [];
+  let agesYears = [];      // celé roky (pre medianAge)
+  let workloads = [];      // úväzky
 
   for (let i = 0; i < employees.length; i++) {
     let e = employees[i];
@@ -148,15 +148,16 @@ export function getEmployeeStatistics(employees) {
     if (e.workload === 30) workload30++;
     if (e.workload === 40) workload40++;
 
-    // vek zamestnanca z ISO dátumu narodenia (desatinný vek, UTC-safe)
-    let age = getAgeFromIsoDecimal(e.birthdate);
+    // vek zamestnanca:
+    let ageYears = getAgeFromIsoYears(e.birthdate);
+    let ageDec = getAgeFromIsoDecimalStable(e.birthdate);
 
-    sumAge = sumAge + age;
-    ages.push(age);
+    sumAge = sumAge + ageDec;
+    agesYears.push(ageYears);
     workloads.push(e.workload);
 
-    if (minAgeDec === null || age < minAgeDec) minAgeDec = age;
-    if (maxAgeDec === null || age > maxAgeDec) maxAgeDec = age;
+    if (minAge === null || ageYears < minAge) minAge = ageYears;
+    if (maxAge === null || ageYears > maxAge) maxAge = ageYears;
 
     if (e.gender === "female") {
       sumWomenWorkload = sumWomenWorkload + e.workload;
@@ -168,13 +169,8 @@ export function getEmployeeStatistics(employees) {
   let averageAge = sumAge / total;
   averageAge = roundTo1Decimal(averageAge);
 
-  // min/max vek (podľa zadania celé čísla)
-  // používame FLOOR na desatinný vek (a zároveň už bez timezone posunov)
-  let minAge = Math.floor(minAgeDec);
-  let maxAge = Math.floor(maxAgeDec);
-
-  // median veku 
-  let medianAge = medianClassic(ages);
+  // median veku (celé číslo podľa zadania)
+  let medianAge = medianClassic(agesYears);
   medianAge = Math.round(medianAge);
 
   // median pre úväzky (klasický medián – pri párnom priemer dvoch stredných)
@@ -213,17 +209,51 @@ export function getEmployeeStatistics(employees) {
 
 // pomocné funkcie
 
-// vek z ISO dátumu narodenia (desatinný), ale "today" berieme na UTC polnoc -> žiadne timezone +1
-function getAgeFromIsoDecimal(iso) {
-  let birth = new Date(iso);
+// vek z ISO dátumu narodenia 
+function getAgeFromIsoYears(iso) {
+  const birth = new Date(iso);
+  const today = new Date();
+
+  const birthY = birth.getUTCFullYear();
+  const birthM = birth.getUTCMonth();
+  const birthD = birth.getUTCDate();
+
+  const todayY = today.getUTCFullYear();
+  const todayM = today.getUTCMonth();
+  const todayD = today.getUTCDate();
+
+  let age = todayY - birthY;
+  if (todayM < birthM || (todayM === birthM && todayD < birthD)) {
+    age--;
+  }
+  return age;
+}
+
+// vek z ISO dátumu narodenia
+// celé roky + zlomok medzi poslednými a ďalšími narodeninami (UTC-safe)
+function getAgeFromIsoDecimalStable(iso) {
+  const birth = new Date(iso);
   birth.setUTCHours(0, 0, 0, 0);
 
-  let today = new Date();
+  const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
 
-  let diffMs = today.getTime() - birth.getTime();
-  let years = diffMs / (365.25 * 24 * 60 * 60 * 1000);
-  return years;
+  const years = getAgeFromIsoYears(iso);
+
+  // posledné narodeniny (v tomto roku alebo minulom)
+  const last = new Date(Date.UTC(
+    today.getUTCFullYear(), birth.getUTCMonth(), birth.getUTCDate()
+  ));
+  if (last.getTime() > today.getTime()) {
+    last.setUTCFullYear(last.getUTCFullYear() - 1);
+  }
+
+  // ďalšie narodeniny
+  const next = new Date(last);
+  next.setUTCFullYear(next.getUTCFullYear() + 1);
+
+  const part = (today.getTime() - last.getTime()) / (next.getTime() - last.getTime());
+  return years + part;
 }
 
 function roundTo1Decimal(x) {
@@ -245,16 +275,4 @@ function medianClassic(arr) {
   } else {
     return (a[mid - 1] + a[mid]) / 2;
   }
-}
-
-// medián úväzkov = dolný stred (aby bol zachovaný 10/20/30/40)
-function medianLowerMiddle(arr) {
-  let a = arr.slice();
-  a.sort(function (x, y) {
-    return x - y;
-  });
-
-  let n = a.length;
-  let mid = Math.floor((n - 1) / 2);
-  return a[mid];
 }

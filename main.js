@@ -15,8 +15,7 @@ function generateEmployeeData(dtoIn) {
   let ageMin = dtoIn.age.min;
   let ageMax = dtoIn.age.max;
 
-  //Zoznam náhodných mužských mien (25)
-  //POZOR: testy chcú max 50 unikátnych mien spolu, preto 25 + 25
+  //Zoznam náhodných mužských mien (25) + ženských mien (25)
   let maleNames = [
     "Peter", "Martin", "Jakub", "Samuel", "Lukas",
     "Michal", "Adam", "Tomas", "Matej", "Dominik",
@@ -25,7 +24,6 @@ function generateEmployeeData(dtoIn) {
     "Juraj", "Robert", "Stefan", "Milan", "Pavol"
   ];
 
-  //Zoznam náhodných ženských mien (25)
   let femaleNames = [
     "Lucia", "Kristina", "Natalia", "Ema", "Sofia",
     "Laura", "Monika", "Zuzana", "Veronika", "Katarina",
@@ -34,22 +32,21 @@ function generateEmployeeData(dtoIn) {
     "Jana", "Ivana", "Michaela", "Andrea", "Denisa"
   ];
 
-  //Zoznam náhodných mužských priezvisk (25)
+  //Zoznam náhodných mužských priezvisk (25) + ženských priezvisk (25) 
   let maleSurnames = [
     "Novak", "Kovac", "Horvath", "Varga", "Toth",
-    "Kucera", "Marek", "Bartok", "Urban", "Simek",
-    "Kral", "Klement", "Farkas", "Klein", "Hruska",
-    "Sokol", "Baran", "Roth", "Hlavac", "Polak",
-    "Ford", "Keller", "Berger", "Cerny", "Bielik"
+    "Kucera", "Marek", "Urban", "Simek", "Kral",
+    "Klement", "Farkas", "Klein", "Hruska", "Sokol",
+    "Baran", "Roth", "Hlavac", "Polak", "Ford",
+    "Keller", "Berger", "Cerny", "Bielik", "Nemec"
   ];
 
-  //Zoznam náhodných ženských priezvisk (25)
   let femaleSurnames = [
     "Novakova", "Kovacova", "Horvathova", "Vargova", "Tothova",
-    "Kucerova", "Markova", "Bartosova", "Urbanova", "Simkova",
-    "Kralova", "Klementova", "Farkasova", "Kleinova", "Hruskova",
-    "Sokolova", "Baranova", "Rothova", "Hlavacova", "Polakova",
-    "Dvorakova", "Svobodova", "Sedlakova", "Prochazkova", "Ruzickova"
+    "Kucerova", "Markova", "Urbanova", "Simkova", "Kralova",
+    "Klementova", "Farkasova", "Kleinova", "Hruskova", "Sokolova",
+    "Baranova", "Rothova", "Hlavacova", "Polakova", "Nemcova",
+    "Bielikova", "Cernyova", "Bergerova", "Kellerova", "Fordova"
   ];
 
   //Možný pracovný úväzok
@@ -87,7 +84,7 @@ function generateEmployeeData(dtoIn) {
         continue;
       }
 
-      //Overenie veku (inkluzívne hranice)
+      //Overenie veku (vrátane hraníc)
       let realAge = getAgeFromDate(birthday);
       if (realAge >= minAge && realAge <= maxAge) {
         usedBirthdates.add(iso);

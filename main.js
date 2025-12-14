@@ -1,20 +1,28 @@
-//Hlavná funkcia na vytvorenie zoznamu zamestnancov
+// Hlavná funkcia
 export function main(dtoIn) {
   let employees = generateEmployeeData(dtoIn);
   let dtoOut = getEmployeeStatistics(employees);
   return dtoOut;
 }
 
-// Generovanie zoznamu zamestnancov - úloha č. 3
+// Generovanie zoznamu zamestnancov – úloha č. 3
 export function generateEmployeeData(dtoIn) {
-  //Počet zamestnancov, ktorý vytvárame
+
+  // Počet zamestnancov
   let count = dtoIn.count;
 
-  //Minimálny a maximálny vek
-  let ageMin = dtoIn.age.min;
-  let ageMax = dtoIn.age.max;
+  // Minimálny a maximálny vek
+  let minAge = dtoIn.age.min;
+  let maxAge = dtoIn.age.max;
 
-  //Zoznam náhodných mien
+  // Ošetrenie random vstupu (môže nastať min > max)
+  if (minAge > maxAge) {
+    let tmp = minAge;
+    minAge = maxAge;
+    maxAge = tmp;
+  }
+
+  // Zoznam náhodných mien
   let names = [
     "Peter", "Martin", "Jakub", "Samuel", "Lukas", "Michal", "Adam", "Tomas", "Matej", "Dominik",
     "Filip", "Patrik", "Andrej", "Daniel", "Erik", "Oliver", "Marek", "Sebastian", "Viktor", "Roman",
@@ -23,7 +31,7 @@ export function generateEmployeeData(dtoIn) {
     "Eva", "Maria", "Barbora", "Petra", "Simona", "Nikola", "Tamara", "Viktoria", "Paulina", "Lenka"
   ];
 
-  //Zoznam náhodných priezvisk
+  // Zoznam náhodných priezvisk
   let surnames = [
     "Novak", "Kovac", "Horvath", "Varga", "Toth", "Kucera", "Marek", "Bartok", "Urban", "Simek",
     "Kral", "Klement", "Farkas", "Klein", "Hruska", "Sokol", "Baran", "Roth", "Hlavac", "Polak",
@@ -34,235 +42,162 @@ export function generateEmployeeData(dtoIn) {
     "Sokolova", "Baranova", "Rothova", "Hlavacova", "Polakova"
   ];
 
-  //Možný pracovný úväzok
+  // Možné pracovné úväzky
   let workloads = [10, 20, 30, 40];
 
-  //Funkcia pre náhodný výber z poľa
-  function pickRandom(list) {
-    let index = Math.floor(Math.random() * list.length);
-    return list[index];
+  // Náhodný výber z poľa
+  function pickRandom(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
   }
 
-  //Funkcia na vytvorenie unikátnych dátumov narodenia v zadanom vekovom rozmedzí
-  //Prevod do ISO formátu
-  function buildUniqueBirthdates(count, minAge, maxAge) {
-    
-    let today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
+  // Vytvorenie unikátnych dátumov narodenia
+  // Dnešný deň
+  let today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
 
-    let from = new Date(today);
-    from.setUTCFullYear(from.getUTCFullYear() - maxAge);
+  // Interval dátumov podľa veku
+  let from = new Date(today);
+  from.setUTCFullYear(from.getUTCFullYear() - maxAge);
 
-    let to = new Date(today);
-    to.setUTCFullYear(to.getUTCFullYear() - minAge);
+  let to = new Date(today);
+  to.setUTCFullYear(to.getUTCFullYear() - minAge);
 
-    // počet dní v intervale 
-    let dayMs = 24 * 60 * 60 * 1000;
-    let totalDays = Math.floor((to.getTime() - from.getTime()) / dayMs) + 1;
-
-    //ak je požadovaných unikátnych dátumov viac ako je možné, zredukujeme na maximum
-    if (count > totalDays) {
-      count = totalDays;
-    }
-
-    //vytvorenie poľa všetkých možných dní v ISO formáte
-    let days = new Array(totalDays);
-    for (let i = 0; i < totalDays; i++) {
-      let d = new Date(from.getTime() + i * dayMs);
-      d.setUTCHours(0, 0, 0, 0);
-      days[i] = d.toISOString();
-    }
-
-    // Fisher–Yates shuffle
-    for (let i = days.length - 1; i > 0; i--) {
-      let j = Math.floor(Math.random() * (i + 1));
-      let tmp = days[i];
-      days[i] = days[j];
-      days[j] = tmp;
-    }
-
-    return days.slice(0, count);
+  // Všetky možné dni v intervale
+  let days = [];
+  for (let d = new Date(from); d <= to; d.setUTCDate(d.getUTCDate() + 1)) {
+    days.push(new Date(d).toISOString());
   }
 
-  //vytvorenie unikátnych dátumov narodenia
-  let birthdates = buildUniqueBirthdates(count, ageMin, ageMax);
+  // Zamiešanie dátumov
+  for (let i = days.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    let tmp = days[i];
+    days[i] = days[j];
+    days[j] = tmp;
+  }
 
-  //Výstup
-  let dtoOut = [];
+  // Vytvorenie zamestnancov
+  let employees = [];
 
-  //Cyklus na vytvorenie náhodnych zamestnancov
   for (let i = 0; i < count; i++) {
-    //pohlavie
-    let gender;
-    if (Math.random() < 0.5) {
-      gender = "male";
-    } else {
-      gender = "female";
-    }
-
-    let name = pickRandom(names);
-    let surname = pickRandom(surnames);
-    let birthdate = birthdates[i]; // unikátne ISO dátumy
-    let workload = pickRandom(workloads);
-
-    //Vytvorenie zamestnanaca
-    let employee = {
-      gender: gender,
-      birthdate: birthdate,
-      name: name,
-      surname: surname,
-      workload: workload
-    };
-
-    dtoOut.push(employee); //Pridáme do generovaného výstupneho zoznamu
+    employees.push({
+      gender: Math.random() < 0.5 ? "male" : "female",
+      birthdate: days[i],
+      name: pickRandom(names),
+      surname: pickRandom(surnames),
+      workload: pickRandom(workloads)
+    });
   }
 
-  return dtoOut;
+  return employees;
 }
 
-// Vytváranie štatistík zamestnancov - úloha č. 4
+// Štatistiky – úloha č. 4
 export function getEmployeeStatistics(employees) {
+
   let total = employees.length;
 
-  // počty úväzkov za týždeň
+  // Počty úväzkov
   let workload10 = 0;
   let workload20 = 0;
   let workload30 = 0;
   let workload40 = 0;
 
-  // vek
+  // Veky
   let sumAge = 0;
   let minAge = Infinity;
   let maxAge = -Infinity;
 
-  // týždenný úväzok žien
+  // Úväzky žien
   let sumWomenWorkload = 0;
   let countWomen = 0;
 
-  // polia pre mediány
+  // Polia pre mediány
   let ages = [];
   let workloads = [];
 
   for (let i = 0; i < employees.length; i++) {
     let e = employees[i];
 
-    // počítadlo úväzkov
+    // Počítanie úväzkov
     if (e.workload === 10) workload10++;
     if (e.workload === 20) workload20++;
     if (e.workload === 30) workload30++;
     if (e.workload === 40) workload40++;
 
-    // vek zamestnanca:
-    let ageWhole = getAgeFromIsoWholeYears(e.birthdate);
-    let ageDec = getAgeFromIsoDecimal(e.birthdate);
+    // Výpočet veku 
+    let age = getAgeFromIso(e.birthdate);
 
-    if (ageWhole < minAge) minAge = ageWhole;
-    if (ageWhole > maxAge) maxAge = ageWhole;
-
-    sumAge = sumAge + ageDec;
-    ages.push(ageDec);
+    sumAge += age;
+    ages.push(age);
     workloads.push(e.workload);
 
+    if (age < minAge) minAge = age;
+    if (age > maxAge) maxAge = age;
+
     if (e.gender === "female") {
-      sumWomenWorkload = sumWomenWorkload + e.workload;
-      countWomen = countWomen + 1;
+      sumWomenWorkload += e.workload;
+      countWomen++;
     }
   }
 
-  // priemer veku (1 desatinné miesto)
-  let averageAge = sumAge / total;
-  averageAge = roundTo1Decimal(averageAge);
+  // Priemerný vek 
+  let averageAge = Math.round((sumAge / total) * 10) / 10;
 
-  // median veku (celé číslo)
-  let medianAge = medianClassic(ages);
-  medianAge = Math.round(medianAge);
+  // Medián veku 
+  let medianAge = Math.round(getMedian(ages));
 
-  // median pre úväzky (klasický medián – pri párnom priemer dvoch stredných)
-  let medianWorkload = medianClassic(workloads);
+  // Medián úväzkov 
+  let medianWorkload = getMedian(workloads);
 
-  // priemer úväzku žien (0 ak nie sú ženy)
+  // Priemer úväzku žien
   let averageWomenWorkload = 0;
   if (countWomen > 0) {
-    averageWomenWorkload = sumWomenWorkload / countWomen;
-    averageWomenWorkload = roundTo1Decimal(averageWomenWorkload);
+    averageWomenWorkload = Math.round((sumWomenWorkload / countWomen) * 10) / 10;
   }
 
-  // triedenie podľa úväzku
-  let sortedByWorkload = employees.slice();
-  sortedByWorkload.sort(function (a, b) {
-    return a.workload - b.workload;
-  });
+  // Zoradenie podľa úväzku
+  let sortedByWorkload = employees.slice().sort((a, b) => a.workload - b.workload);
 
-  let dtoOut = {
-    total: total,
-    workload10: workload10,
-    workload20: workload20,
-    workload30: workload30,
-    workload40: workload40,
-    averageAge: averageAge,
-    minAge: minAge,
-    maxAge: maxAge,
-    medianAge: medianAge,
-    medianWorkload: medianWorkload,
-    averageWomenWorkload: averageWomenWorkload,
-    sortedByWorkload: sortedByWorkload
+  return {
+    total,
+    workload10,
+    workload20,
+    workload30,
+    workload40,
+    averageAge,
+    minAge,
+    maxAge,
+    medianAge,
+    medianWorkload,
+    averageWomenWorkload,
+    sortedByWorkload
   };
-
-  return dtoOut;
 }
 
-// pomocné funkcie
 
-// vek z ISO dátumu narodenia 
-function getAgeFromIsoWholeYears(iso) {
+// Pomocné funkcie
+// Výpočet veku
+function getAgeFromIso(iso) {
   const birth = new Date(iso);
   const today = new Date();
 
-  const birthY = birth.getUTCFullYear();
-  const birthM = birth.getUTCMonth();
-  const birthD = birth.getUTCDate();
+  let age = today.getUTCFullYear() - birth.getUTCFullYear();
+  const m = today.getUTCMonth() - birth.getUTCMonth();
 
-  const todayY = today.getUTCFullYear();
-  const todayM = today.getUTCMonth();
-  const todayD = today.getUTCDate();
-
-  let age = todayY - birthY;
-  if (todayM < birthM || (todayM === birthM && todayD < birthD)) {
+  if (m < 0 || (m === 0 && today.getUTCDate() < birth.getUTCDate())) {
     age--;
   }
   return age;
 }
 
-// vek z ISO dátumu narodenia (desatinný)
-function getAgeFromIsoDecimal(iso) {
-  let birth = new Date(iso);
-  birth.setUTCHours(0, 0, 0, 0);
+// Klasický medián
+function getMedian(arr) {
+  let a = arr.slice().sort((x, y) => x - y);
+  let mid = Math.floor(a.length / 2);
 
-  let today = new Date();
-  today.setUTCHours(0, 0, 0, 0);
-
-  let diffMs = today.getTime() - birth.getTime();
-  let years = diffMs / (365.25 * 24 * 60 * 60 * 1000);
-  return years;
-}
-
-function roundTo1Decimal(x) {
-  return Math.round(x * 10) / 10;
-}
-
-// medián (pri párnom = priemer 2 stredných)
-function medianClassic(arr) {
-  let a = arr.slice();
-  a.sort(function (x, y) {
-    return x - y;
-  });
-
-  let n = a.length;
-  let mid = Math.floor(n / 2);
-
-  if (n % 2 === 1) {
+  if (a.length % 2 === 1) {
     return a[mid];
-  } else {
-    return (a[mid - 1] + a[mid]) / 2;
   }
+  return (a[mid - 1] + a[mid]) / 2;
 }

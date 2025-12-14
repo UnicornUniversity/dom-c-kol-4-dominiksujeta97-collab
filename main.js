@@ -15,7 +15,7 @@ function generateEmployeeData(dtoIn) {
   let ageMin = dtoIn.age.min;
   let ageMax = dtoIn.age.max;
 
-  //Zoznam náhodných mužských mien 
+  //Zoznam náhodných mužských mien
   let maleNames = [
     "Peter", "Martin", "Jakub", "Samuel", "Lukas", "Michal", "Adam", "Tomas", "Matej", "Dominik",
     "Filip", "Patrik", "Andrej", "Daniel", "Erik", "Oliver", "Marek", "Sebastian", "Viktor", "Roman",
@@ -24,7 +24,7 @@ function generateEmployeeData(dtoIn) {
     "Vladimir", "Richard", "Marian", "Alexej", "Teodor", "Eduard", "Arpad", "Frantisek", "Ondrej", "Mateo"
   ];
 
-  //Zoznam náhodných ženských mien 
+  //Zoznam náhodných ženských mien
   let femaleNames = [
     "Lucia", "Kristina", "Natalia", "Ema", "Sofia", "Laura", "Monika", "Zuzana", "Veronika", "Katarina",
     "Eva", "Maria", "Barbora", "Petra", "Simona", "Nikola", "Tamara", "Viktoria", "Paulina", "Lenka",
@@ -33,7 +33,7 @@ function generateEmployeeData(dtoIn) {
     "Timea", "Dorota", "Aneta", "Beata", "Bianka", "Emilia", "Magdalena", "Stela", "Diana", "Viera"
   ];
 
-  //Zoznam náhodných mužských priezvisk 
+  //Zoznam náhodných mužských priezvisk
   let maleSurnames = [
     "Novak", "Kovac", "Horvath", "Varga", "Toth", "Kucera", "Marek", "Bartok", "Urban", "Simek",
     "Kral", "Klement", "Farkas", "Klein", "Hruska", "Sokol", "Baran", "Roth", "Hlavac", "Polak",
@@ -44,7 +44,7 @@ function generateEmployeeData(dtoIn) {
     "Kostka", "Mikulas", "Zeman", "Stanek", "Kriz"
   ];
 
-  //Zoznam náhodných ženských priezvisk 
+  //Zoznam náhodných ženských priezvisk
   let femaleSurnames = [
     "Novakova", "Kovacova", "Horvathova", "Vargova", "Tothova",
     "Kucerova", "Markova", "Bartosova", "Urbanova", "Simkova",
@@ -67,52 +67,42 @@ function generateEmployeeData(dtoIn) {
     return list[index];
   }
 
-  //Set na už použité dátumy narodenia - zabezpečenie jedinečnosti
-  let usedBirthdates = new Set();
-
-  //Funkcia na výpočet veku z dátumu s púrevodom na milisekundy
-  function getAgeFromDate(date) {
-    let diffMs = Date.now() - date.getTime();
-    let years = diffMs / (365.25 * 24 * 60 * 60 * 1000);
-    return years;
+  // Pomocná funkcia: nastaví UTC polnoc
+  function toUtcMidnight(d) {
+    let x = new Date(d);
+    x.setUTCHours(0, 0, 0, 0);
+    return x;
   }
 
-  //Funkcia na generovanie jedinečného dátumu narodenia v zadanom vekovom rozmedzí
-  //Prevod do ISO formátu
-  // (robím to cez náhodný dátum medzi hranicami, aby testy vždy sedeli)
-  function generateBirthdate(minAge, maxAge) {
-    while (true) {
-      let now = new Date();
+  // najmladší = dnes - minAge rokov (najnovší dátum)
+  // najstarší = dnes - maxAge rokov (najstarší dátum)
+  let now = new Date();
+  let newest = new Date(now);
+  newest.setUTCFullYear(newest.getUTCFullYear() - ageMin);
 
-      // najstarší povolený (maxAge rokov dozadu)
-      let oldest = new Date(now);
-      oldest.setUTCFullYear(oldest.getUTCFullYear() - maxAge);
+  let oldest = new Date(now);
+  oldest.setUTCFullYear(oldest.getUTCFullYear() - ageMax);
 
-      // najmladší povolený (minAge rokov dozadu)
-      let youngest = new Date(now);
-      youngest.setUTCFullYear(youngest.getUTCFullYear() - minAge);
+  newest = toUtcMidnight(newest);
+  oldest = toUtcMidnight(oldest);
 
-      // náhodný čas medzi oldest a youngest
-      let minTime = oldest.getTime();
-      let maxTime = youngest.getTime();
-      let randomTime = minTime + Math.random() * (maxTime - minTime);
+  // zoznam všetkých dní v intervale
+  let birthdatePool = [];
+  for (let d = new Date(oldest); d <= newest; d.setUTCDate(d.getUTCDate() + 1)) {
+    birthdatePool.push(new Date(d).toISOString());
+  }
 
-      let birthday = new Date(randomTime);
-      birthday.setUTCHours(0, 0, 0, 0);
+  // ak by interval nemal dosť dní
+  if (count > birthdatePool.length) {
+    throw new Error("Nie je možné vygenerovať " + count + " jedinečných dátumov narodenia v zadanom rozsahu.");
+  }
 
-      let iso = birthday.toISOString();
-
-      if (usedBirthdates.has(iso)) {
-        continue;
-      }
-
-      //Overenie veku (vrátane hraníc)
-      let realAge = getAgeFromDate(birthday);
-      if (realAge >= minAge && realAge <= maxAge) {
-        usedBirthdates.add(iso);
-        return iso;
-      }
-    }
+  // rýchle premiešanie (Fisher–Yates)
+  for (let i = birthdatePool.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    let tmp = birthdatePool[i];
+    birthdatePool[i] = birthdatePool[j];
+    birthdatePool[j] = tmp;
   }
 
   //Výstup
@@ -139,7 +129,9 @@ function generateEmployeeData(dtoIn) {
       surname = pickRandom(femaleSurnames);
     }
 
-    let birthdate = generateBirthdate(ageMin, ageMax);
+    // Dátum narodenia berieme z premiešaného poolu (jedinečné a rýchle)
+    let birthdate = birthdatePool[i];
+
     let workload = pickRandom(workloads);
 
     //Vytvorenie zamestnanaca
@@ -229,17 +221,7 @@ function getEmployeeStatistics(employees) {
   }
 
   // zoznam zamestnancov zotriedený podľa výšky úväzku od najmenšieho po najväčší
-  // (kopírujem aj objekty, aby som nemal referencie na pôvodné)
-  let sortedByWorkload = employees.map(function (e) {
-    return {
-      gender: e.gender,
-      birthdate: e.birthdate,
-      name: e.name,
-      surname: e.surname,
-      workload: e.workload
-    };
-  });
-
+  let sortedByWorkload = employees.slice();
   sortedByWorkload.sort(function (a, b) {
     return a.workload - b.workload;
   });

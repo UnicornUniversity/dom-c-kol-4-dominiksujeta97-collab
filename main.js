@@ -31,8 +31,7 @@ export function generateEmployeeData(dtoIn) {
     "Novakova", "Kovacova", "Horvathova", "Vargova", "Tothova",
     "Kucerova", "Markova", "Bartosova", "Urbanova", "Simkova",
     "Kralova", "Klementova", "Farkasova", "Kleinova", "Hruskova",
-    "Sokolova", "Baranova", "Rothova", "Hlavacova", "Polakova",
-    "Svoboda", "Dvorak", "Svobodova", "Dvorakova", "Nemec"
+    "Sokolova", "Baranova", "Rothova", "Hlavacova", "Polakova"
   ];
 
   //Možný pracovný úväzok
@@ -47,37 +46,34 @@ export function generateEmployeeData(dtoIn) {
   //Funkcia na vytvorenie unikátnych dátumov narodenia v zadanom vekovom rozmedzí
   //Prevod do ISO formátu
   function buildUniqueBirthdates(count, minAge, maxAge) {
-    // "dnes" na UTC polnoc (stabilné medzi prostrediami)
+    
     let today = new Date();
     today.setUTCHours(0, 0, 0, 0);
 
-    // interval dátumov: [today - maxAge rokov, today - minAge rokov]
     let from = new Date(today);
     from.setUTCFullYear(from.getUTCFullYear() - maxAge);
 
     let to = new Date(today);
     to.setUTCFullYear(to.getUTCFullYear() - minAge);
 
-    // všetky dni v intervale
-    let days = [];
-    for (let d = new Date(from); d <= to; d.setUTCDate(d.getUTCDate() + 1)) {
-      // každý deň je unikátny ISO
-      days.push(new Date(d).toISOString());
+    // počet dní v intervale 
+    let dayMs = 24 * 60 * 60 * 1000;
+    let totalDays = Math.floor((to.getTime() - from.getTime()) / dayMs) + 1;
+
+    //ak je požadovaných unikátnych dátumov viac ako je možné, zredukujeme na maximum
+    if (count > totalDays) {
+      count = totalDays;
     }
 
-    // ak potrebujeme viac dátumov než máme dní, doplníme ďalšie unikátne
-    if (count > days.length) {
-      let needed = count - days.length;
-      for (let i = 0; i < needed; i++) {
-        let base = new Date(from);
-        // posúvame sa po dňoch
-        base.setUTCDate(base.getUTCDate() + (i % Math.max(1, days.length)));
-        base.setUTCMilliseconds(i % 1000);
-        days.push(base.toISOString());
-      }
+    //vytvorenie poľa všetkých možných dní v ISO formáte
+    let days = new Array(totalDays);
+    for (let i = 0; i < totalDays; i++) {
+      let d = new Date(from.getTime() + i * dayMs);
+      d.setUTCHours(0, 0, 0, 0);
+      days[i] = d.toISOString();
     }
 
-    // premiešame dni
+    // Fisher–Yates shuffle
     for (let i = days.length - 1; i > 0; i--) {
       let j = Math.floor(Math.random() * (i + 1));
       let tmp = days[i];
@@ -136,8 +132,8 @@ export function getEmployeeStatistics(employees) {
 
   // vek
   let sumAge = 0;
-  let minAgeDec = null;
-  let maxAgeDec = null;
+  let minAge = Infinity;
+  let maxAge = -Infinity;
 
   // týždenný úväzok žien
   let sumWomenWorkload = 0;
@@ -156,15 +152,16 @@ export function getEmployeeStatistics(employees) {
     if (e.workload === 30) workload30++;
     if (e.workload === 40) workload40++;
 
-    // vek zamestnanca z ISO dátumu narodenia
-    let age = getAgeFromIsoDecimal(e.birthdate);
+    // vek zamestnanca:
+    let ageWhole = getAgeFromIsoWholeYears(e.birthdate);
+    let ageDec = getAgeFromIsoDecimal(e.birthdate);
 
-    sumAge = sumAge + age;
-    ages.push(age);
+    if (ageWhole < minAge) minAge = ageWhole;
+    if (ageWhole > maxAge) maxAge = ageWhole;
+
+    sumAge = sumAge + ageDec;
+    ages.push(ageDec);
     workloads.push(e.workload);
-
-    if (minAgeDec === null || age < minAgeDec) minAgeDec = age;
-    if (maxAgeDec === null || age > maxAgeDec) maxAgeDec = age;
 
     if (e.gender === "female") {
       sumWomenWorkload = sumWomenWorkload + e.workload;
@@ -176,15 +173,11 @@ export function getEmployeeStatistics(employees) {
   let averageAge = sumAge / total;
   averageAge = roundTo1Decimal(averageAge);
 
-  // min/max vek 
-  let minAge = Math.round(minAgeDec);
-  let maxAge = Math.round(maxAgeDec);
-
-  // medián veku 
+  // median veku (celé číslo)
   let medianAge = medianClassic(ages);
   medianAge = Math.round(medianAge);
 
-  // medián úväzkov
+  // median pre úväzky (klasický medián – pri párnom priemer dvoch stredných)
   let medianWorkload = medianClassic(workloads);
 
   // priemer úväzku žien (0 ak nie sú ženy)
@@ -194,7 +187,7 @@ export function getEmployeeStatistics(employees) {
     averageWomenWorkload = roundTo1Decimal(averageWomenWorkload);
   }
 
-  // triedenie podľa úväzku (nesmie meniť originál)
+  // triedenie podľa úväzku
   let sortedByWorkload = employees.slice();
   sortedByWorkload.sort(function (a, b) {
     return a.workload - b.workload;
@@ -219,6 +212,26 @@ export function getEmployeeStatistics(employees) {
 }
 
 // pomocné funkcie
+
+// vek z ISO dátumu narodenia 
+function getAgeFromIsoWholeYears(iso) {
+  const birth = new Date(iso);
+  const today = new Date();
+
+  const birthY = birth.getUTCFullYear();
+  const birthM = birth.getUTCMonth();
+  const birthD = birth.getUTCDate();
+
+  const todayY = today.getUTCFullYear();
+  const todayM = today.getUTCMonth();
+  const todayD = today.getUTCDate();
+
+  let age = todayY - birthY;
+  if (todayM < birthM || (todayM === birthM && todayD < birthD)) {
+    age--;
+  }
+  return age;
+}
 
 // vek z ISO dátumu narodenia (desatinný)
 function getAgeFromIsoDecimal(iso) {

@@ -46,7 +46,6 @@ export function generateEmployeeData(dtoIn) {
   //Funkcia na vytvorenie unikátnych dátumov narodenia v zadanom vekovom rozmedzí
   //Prevod do ISO formátu
   function buildUniqueBirthdates(count, minAge, maxAge) {
-    // "dnes" na UTC polnoc (stabilné medzi prostrediami)
     let today = new Date();
     today.setUTCHours(0, 0, 0, 0);
 
@@ -64,12 +63,12 @@ export function generateEmployeeData(dtoIn) {
       days.push(new Date(d).toISOString());
     }
 
-    // bezpečnosť, keby niekto chcel viac ľudí ako dní v intervale
+    // ak žiadaný počet presahuje počet dní, zredukujeme ho
     if (count > days.length) {
       count = days.length;
     }
 
-    // Fisher–Yates shuffle
+    // premiešanie poľa
     for (let i = days.length - 1; i > 0; i--) {
       let j = Math.floor(Math.random() * (i + 1));
       let tmp = days[i];
@@ -126,18 +125,18 @@ export function getEmployeeStatistics(employees) {
   let workload30 = 0;
   let workload40 = 0;
 
-  // vek
-  let sumAge = 0;          
-  let minAge = null;       
-  let maxAge = null;       
+  // veky (min/max musia byť celé roky)
+  let sumAge = 0; // desatinný vek pre averageAge
+  let minAge = null;
+  let maxAge = null;
 
   // týždenný úväzok žien
   let sumWomenWorkload = 0;
   let countWomen = 0;
 
   // polia pre mediány
-  let agesYears = [];      // celé roky (pre medianAge)
-  let workloads = [];      // úväzky
+  let agesYears = [];   // celé roky
+  let workloads = [];   // 10/20/30/40
 
   for (let i = 0; i < employees.length; i++) {
     let e = employees[i];
@@ -148,9 +147,9 @@ export function getEmployeeStatistics(employees) {
     if (e.workload === 30) workload30++;
     if (e.workload === 40) workload40++;
 
-    // vek zamestnanca:
-    let ageYears = getAgeFromIsoYears(e.birthdate);
-    let ageDec = getAgeFromIsoDecimalStable(e.birthdate);
+    // vek zamestnanca
+    let ageYears = getAgeFromIsoYears(e.birthdate);          // celé roky (UTC)
+    let ageDec = getAgeFromIsoDecimalStable(e.birthdate);    // desatinný vek 
 
     sumAge = sumAge + ageDec;
     agesYears.push(ageYears);
@@ -165,18 +164,18 @@ export function getEmployeeStatistics(employees) {
     }
   }
 
-  // priemer veku (1 desatinné miesto)
+  // priemer veku (na 1 desatinné miesto)
   let averageAge = sumAge / total;
   averageAge = roundTo1Decimal(averageAge);
 
-  // median veku (celé číslo podľa zadania)
+  // median veku (celé číslo)
   let medianAge = medianClassic(agesYears);
   medianAge = Math.round(medianAge);
 
-  // median pre úväzky (klasický medián – pri párnom priemer dvoch stredných)
+  // median workloadu (klasický medián – pri párnom priemer dvoch stredných)
   let medianWorkload = medianClassic(workloads);
 
-  // priemer úväzku žien (0 ak nie sú ženy)
+  // priemer úväzku žien
   let averageWomenWorkload = 0;
   if (countWomen > 0) {
     averageWomenWorkload = sumWomenWorkload / countWomen;
@@ -189,7 +188,7 @@ export function getEmployeeStatistics(employees) {
     return a.workload - b.workload;
   });
 
-  let dtoOut = {
+  return {
     total: total,
     workload10: workload10,
     workload20: workload20,
@@ -203,13 +202,11 @@ export function getEmployeeStatistics(employees) {
     averageWomenWorkload: averageWomenWorkload,
     sortedByWorkload: sortedByWorkload
   };
-
-  return dtoOut;
 }
 
 // pomocné funkcie
 
-// vek z ISO dátumu narodenia 
+// celé roky veku
 function getAgeFromIsoYears(iso) {
   const birth = new Date(iso);
   const today = new Date();
@@ -229,8 +226,7 @@ function getAgeFromIsoYears(iso) {
   return age;
 }
 
-// vek z ISO dátumu narodenia
-// celé roky + zlomok medzi poslednými a ďalšími narodeninami (UTC-safe)
+// desatinný vek 
 function getAgeFromIsoDecimalStable(iso) {
   const birth = new Date(iso);
   birth.setUTCHours(0, 0, 0, 0);

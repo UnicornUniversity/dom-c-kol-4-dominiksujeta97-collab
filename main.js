@@ -1,114 +1,72 @@
-//Hlavná funkcia na vytvorenie zoznamu zamestnancov
 export function main(dtoIn) {
   let employees = generateEmployeeData(dtoIn);
   let dtoOut = getEmployeeStatistics(employees);
   return dtoOut;
 }
 
-// Generovanie zoznamu zamestnancov - úloha č. 3
-
 function generateEmployeeData(dtoIn) {
-  //Počet zamestnancov, ktorý vytvárame
   let count = dtoIn.count;
 
-  //Minimálny a maximálny vek
   let ageMin = dtoIn.age.min;
   let ageMax = dtoIn.age.max;
 
-  //Zoznam náhodných mužských mien
-  let maleNames = [
+  let names = [
     "Peter", "Martin", "Jakub", "Samuel", "Lukas", "Michal", "Adam", "Tomas", "Matej", "Dominik",
     "Filip", "Patrik", "Andrej", "Daniel", "Erik", "Oliver", "Marek", "Sebastian", "Viktor", "Roman",
     "Rastislav", "Boris", "Jan", "Simon", "David", "Karol", "Igor", "Norbert", "Gabriel", "Henrich",
-    "Juraj", "Robert", "Stefan", "Milan", "Pavol", "Ladislav", "Radovan", "Jaroslav", "Lubomir", "Alojz",
-    "Vladimir", "Richard", "Marian", "Alexej", "Teodor", "Eduard", "Arpad", "Frantisek", "Ondrej", "Mateo"
-  ];
-
-  //Zoznam náhodných ženských mien
-  let femaleNames = [
     "Lucia", "Kristina", "Natalia", "Ema", "Sofia", "Laura", "Monika", "Zuzana", "Veronika", "Katarina",
-    "Eva", "Maria", "Barbora", "Petra", "Simona", "Nikola", "Tamara", "Viktoria", "Paulina", "Lenka",
-    "Jana", "Ivana", "Michaela", "Andrea", "Denisa", "Alena", "Martina", "Dominika", "Alexandra", "Patricia",
-    "Klaudia", "Nina", "Karina", "Adriana", "Helena", "Renata", "Tatiana", "Silvia", "Elena", "Olivia",
-    "Timea", "Dorota", "Aneta", "Beata", "Bianka", "Emilia", "Magdalena", "Stela", "Diana", "Viera"
+    "Eva", "Maria", "Barbora", "Petra", "Simona", "Nikola", "Tamara", "Viktoria", "Paulina", "Lenka"
   ];
 
-  //Zoznam náhodných mužských priezvisk
-  let maleSurnames = [
+  let surnames = [
     "Novak", "Kovac", "Horvath", "Varga", "Toth", "Kucera", "Marek", "Bartok", "Urban", "Simek",
     "Kral", "Klement", "Farkas", "Klein", "Hruska", "Sokol", "Baran", "Roth", "Hlavac", "Polak",
     "Ford", "Keller", "Berger", "Cerny", "Bielik",
-    "Molnar", "Balaz", "Kadlec", "Nemec", "Pavlik",
-    "Blaha", "Svoboda", "Dvorak", "Kratochvil", "Sedlak",
-    "Benko", "Bartos", "Chovanec", "Jelinek", "Kolar",
-    "Kostka", "Mikulas", "Zeman", "Stanek", "Kriz"
-  ];
-
-  //Zoznam náhodných ženských priezvisk
-  let femaleSurnames = [
     "Novakova", "Kovacova", "Horvathova", "Vargova", "Tothova",
     "Kucerova", "Markova", "Bartosova", "Urbanova", "Simkova",
     "Kralova", "Klementova", "Farkasova", "Kleinova", "Hruskova",
-    "Sokolova", "Baranova", "Rothova", "Hlavacova", "Polakova",
-    "Molnarova", "Balazova", "Kadlecova", "Nemcova", "Pavlikova",
-    "Blahova", "Svobodova", "Dvorakova", "Kratochvilova", "Sedlakova",
-    "Benkova", "Bartosova2", "Chovancova", "Jelinekova", "Kolarova",
-    "Kostkova", "Mikulasova", "Zemanova", "Stankova", "Krizova",
-    "Krejcova", "Pokorna", "Vesela", "Prochazkova", "Holubova",
-    "Ruzickova", "Rybarova", "Liskova", "Kovacikova", "Stanekova"
+    "Sokolova", "Baranova", "Rothova", "Hlavacova", "Polakova"
   ];
 
-  //Možný pracovný úväzok
   let workloads = [10, 20, 30, 40];
 
-  //Funkcia pre náhodný výber z poľa
   function pickRandom(list) {
     let index = Math.floor(Math.random() * list.length);
     return list[index];
   }
 
-  // Pomocná funkcia: nastaví UTC polnoc
-  function toUtcMidnight(d) {
-    let x = new Date(d);
-    x.setUTCHours(0, 0, 0, 0);
-    return x;
+  let usedBirthdates = new Set();
+
+  function getAgeFromDate(date) {
+    let diffMs = Date.now() - date.getTime();
+    let years = diffMs / (365.25 * 24 * 60 * 60 * 1000);
+    return years;
   }
 
-  // najmladší = dnes - minAge rokov (najnovší dátum)
-  // najstarší = dnes - maxAge rokov (najstarší dátum)
-  let now = new Date();
-  let newest = new Date(now);
-  newest.setUTCFullYear(newest.getUTCFullYear() - ageMin);
+  function generateBirthdate(minAge, maxAge) {
+    while (true) {
+      let age = minAge + Math.random() * (maxAge - minAge);
 
-  let oldest = new Date(now);
-  oldest.setUTCFullYear(oldest.getUTCFullYear() - ageMax);
+      let diffMs = age * 365.25 * 24 * 60 * 60 * 1000;
+      let birthday = new Date(Date.now() - diffMs);
+      birthday.setUTCHours(0, 0, 0, 0);
 
-  newest = toUtcMidnight(newest);
-  oldest = toUtcMidnight(oldest);
+      let iso = birthday.toISOString();
 
-  // zoznam všetkých dní v intervale
-  let birthdatePool = [];
-  for (let d = new Date(oldest); d <= newest; d.setUTCDate(d.getUTCDate() + 1)) {
-    birthdatePool.push(new Date(d).toISOString());
+      if (usedBirthdates.has(iso)) {
+        continue;
+      }
+
+      let realAge = getAgeFromDate(birthday);
+      if (realAge > minAge && realAge < maxAge) {
+        usedBirthdates.add(iso);
+        return iso;
+      }
+    }
   }
 
-  // ak by interval nemal dosť dní
-  if (count > birthdatePool.length) {
-    throw new Error("Nie je možné vygenerovať " + count + " jedinečných dátumov narodenia v zadanom rozsahu.");
-  }
-
-  // rýchle premiešanie (Fisher–Yates)
-  for (let i = birthdatePool.length - 1; i > 0; i--) {
-    let j = Math.floor(Math.random() * (i + 1));
-    let tmp = birthdatePool[i];
-    birthdatePool[i] = birthdatePool[j];
-    birthdatePool[j] = tmp;
-  }
-
-  //Výstup
   let dtoOut = [];
 
-  //Cyklus na vytvorenie náhodnych zamestnancov
   for (let i = 0; i < count; i++) {
     let gender;
     if (Math.random() < 0.5) {
@@ -117,24 +75,11 @@ function generateEmployeeData(dtoIn) {
       gender = "female";
     }
 
-    let name;
-    let surname;
-
-    //Vyber mena a priezviska podľa pohlavia
-    if (gender === "male") {
-      name = pickRandom(maleNames);
-      surname = pickRandom(maleSurnames);
-    } else {
-      name = pickRandom(femaleNames);
-      surname = pickRandom(femaleSurnames);
-    }
-
-    // Dátum narodenia berieme z premiešaného poolu (jedinečné a rýchle)
-    let birthdate = birthdatePool[i];
-
+    let name = pickRandom(names);
+    let surname = pickRandom(surnames);
+    let birthdate = generateBirthdate(ageMin, ageMax);
     let workload = pickRandom(workloads);
 
-    //Vytvorenie zamestnanaca
     let employee = {
       gender: gender,
       birthdate: birthdate,
@@ -143,18 +88,16 @@ function generateEmployeeData(dtoIn) {
       workload: workload
     };
 
-    dtoOut.push(employee); //Pridáme do generovaného výstupneho zoznamu
+    dtoOut.push(employee);
   }
 
   return dtoOut;
 }
 
-// Vytváranie štatistík zamestnancov - úloha č. 4
-
 function getEmployeeStatistics(employees) {
   let total = employees.length;
 
-  // počty pracovných úväzkov
+  // počty workloadov
   let workload10 = 0;
   let workload20 = 0;
   let workload30 = 0;
@@ -165,7 +108,7 @@ function getEmployeeStatistics(employees) {
   let minAge = null;
   let maxAge = null;
 
-  // výška úväzku žien
+  // pre ženy workload
   let sumWomenWorkload = 0;
   let countWomen = 0;
 
@@ -176,13 +119,13 @@ function getEmployeeStatistics(employees) {
   for (let i = 0; i < employees.length; i++) {
     let e = employees[i];
 
-    // počítadlo úväzkov
+    // workload counts
     if (e.workload === 10) workload10++;
     if (e.workload === 20) workload20++;
     if (e.workload === 30) workload30++;
     if (e.workload === 40) workload40++;
 
-    // vek z ISO dátumu narodenia
+    // age from ISO birthdate
     let age = getAgeFromIso(e.birthdate);
     sumAge = sumAge + age;
 
@@ -198,35 +141,34 @@ function getEmployeeStatistics(employees) {
     }
   }
 
-  // priemerný vek (na 1 desatinné miesto)
+  // average age (1 desatinné)
   let averageAge = sumAge / total;
   averageAge = roundTo1Decimal(averageAge);
 
-  // min/max vek (celé čísla)
+  // min/max age (celé čísla)
   minAge = Math.round(minAge);
   maxAge = Math.round(maxAge);
 
-  // median vek (celé číslo)
+  // median age (celé číslo)
   let medianAge = medianClassic(ages);
   medianAge = Math.round(medianAge);
 
-  // median úväzkov (dolný stred = vždy 10/20/30/40)
+  // median workload (dolný stred = vždy 10/20/30/40)
   let medianWorkload = medianLowerMiddle(workloads);
 
-  // priemer výšky úväzkov pre ženy (1 desatinné alebo celé číslo)
+  // average women workload (0 ak nie sú ženy)
   let averageWomenWorkload = 0;
   if (countWomen > 0) {
     averageWomenWorkload = sumWomenWorkload / countWomen;
     averageWomenWorkload = roundTo1Decimal(averageWomenWorkload);
   }
 
-  // zoznam zamestnancov zotriedený podľa výšky úväzku od najmenšieho po najväčší
+  // sortedByWorkload (jednoduché triedenie)
   let sortedByWorkload = employees.slice();
   sortedByWorkload.sort(function (a, b) {
     return a.workload - b.workload;
   });
 
-  //Výstup
   let dtoOut = {
     total: total,
     workload10: workload10,
@@ -245,9 +187,8 @@ function getEmployeeStatistics(employees) {
   return dtoOut;
 }
 
-// pomocné funkcie
+// ===== helpery (stále jednoduché) =====
 
-// vek z ISO dátumu narodenia
 function getAgeFromIso(iso) {
   let d = new Date(iso);
   let diffMs = Date.now() - d.getTime();
@@ -259,7 +200,7 @@ function roundTo1Decimal(x) {
   return Math.round(x * 10) / 10;
 }
 
-// medián (pri párnom = priemer 2 stredných)
+// klasický medián (pri párnom = priemer 2 stredných)
 function medianClassic(arr) {
   let a = arr.slice();
   a.sort(function (x, y) {
@@ -276,7 +217,7 @@ function medianClassic(arr) {
   }
 }
 
-// medián úvázkov = dolný stred (aby bolo dodržané 10/20/30/40)
+// medián workload = dolný stred (aby bol vždy 10/20/30/40)
 function medianLowerMiddle(arr) {
   let a = arr.slice();
   a.sort(function (x, y) {

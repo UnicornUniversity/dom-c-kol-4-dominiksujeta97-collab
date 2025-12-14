@@ -15,47 +15,41 @@ function generateEmployeeData(dtoIn) {
   let ageMin = dtoIn.age.min;
   let ageMax = dtoIn.age.max;
 
-  //Zoznam náhodných mužských mien 
+  //Zoznam náhodných mužských mien (25)
+  //POZOR: testy chcú max 50 unikátnych mien spolu, preto 25 + 25
   let maleNames = [
-    "Peter", "Martin", "Jakub", "Samuel", "Lukas", "Michal", "Adam", "Tomas", "Matej", "Dominik",
-    "Filip", "Patrik", "Andrej", "Daniel", "Erik", "Oliver", "Marek", "Sebastian", "Viktor", "Roman",
-    "Rastislav", "Boris", "Jan", "Simon", "David", "Karol", "Igor", "Norbert", "Gabriel", "Henrich",
-    "Juraj", "Robert", "Stefan", "Milan", "Pavol", "Ladislav", "Radovan", "Jaroslav", "Lubomir", "Alojz",
-    "Vladimir", "Richard", "Marian", "Alexej", "Teodor", "Eduard", "Arpad", "Frantisek", "Ondrej", "Mateo"
+    "Peter", "Martin", "Jakub", "Samuel", "Lukas",
+    "Michal", "Adam", "Tomas", "Matej", "Dominik",
+    "Filip", "Patrik", "Andrej", "Daniel", "Erik",
+    "Oliver", "Marek", "Sebastian", "Viktor", "Roman",
+    "Juraj", "Robert", "Stefan", "Milan", "Pavol"
   ];
 
-  //Zoznam náhodných ženských mien 
+  //Zoznam náhodných ženských mien (25)
   let femaleNames = [
-    "Lucia", "Kristina", "Natalia", "Ema", "Sofia", "Laura", "Monika", "Zuzana", "Veronika", "Katarina",
-    "Eva", "Maria", "Barbora", "Petra", "Simona", "Nikola", "Tamara", "Viktoria", "Paulina", "Lenka",
-    "Jana", "Ivana", "Michaela", "Andrea", "Denisa", "Alena", "Martina", "Dominika", "Alexandra", "Patricia",
-    "Klaudia", "Nina", "Karina", "Adriana", "Helena", "Renata", "Tatiana", "Silvia", "Elena", "Olivia",
-    "Timea", "Dorota", "Aneta", "Beata", "Bianka", "Emilia", "Magdalena", "Stela", "Diana", "Viera"
+    "Lucia", "Kristina", "Natalia", "Ema", "Sofia",
+    "Laura", "Monika", "Zuzana", "Veronika", "Katarina",
+    "Eva", "Maria", "Barbora", "Petra", "Simona",
+    "Nikola", "Tamara", "Viktoria", "Paulina", "Lenka",
+    "Jana", "Ivana", "Michaela", "Andrea", "Denisa"
   ];
 
-  //Zoznam náhodných mužských priezvisk 
+  //Zoznam náhodných mužských priezvisk (25)
   let maleSurnames = [
-    "Novak", "Kovac", "Horvath", "Varga", "Toth", "Kucera", "Marek", "Bartok", "Urban", "Simek",
-    "Kral", "Klement", "Farkas", "Klein", "Hruska", "Sokol", "Baran", "Roth", "Hlavac", "Polak",
-    "Ford", "Keller", "Berger", "Cerny", "Bielik",
-    "Molnar", "Balaz", "Kadlec", "Nemec", "Pavlik",
-    "Blaha", "Svoboda", "Dvorak", "Kratochvil", "Sedlak",
-    "Benko", "Bartos", "Chovanec", "Jelinek", "Kolar",
-    "Kostka", "Mikulas", "Zeman", "Stanek", "Kriz"
+    "Novak", "Kovac", "Horvath", "Varga", "Toth",
+    "Kucera", "Marek", "Bartok", "Urban", "Simek",
+    "Kral", "Klement", "Farkas", "Klein", "Hruska",
+    "Sokol", "Baran", "Roth", "Hlavac", "Polak",
+    "Ford", "Keller", "Berger", "Cerny", "Bielik"
   ];
 
-  //Zoznam náhodných ženských priezvisk 
+  //Zoznam náhodných ženských priezvisk (25)
   let femaleSurnames = [
     "Novakova", "Kovacova", "Horvathova", "Vargova", "Tothova",
     "Kucerova", "Markova", "Bartosova", "Urbanova", "Simkova",
     "Kralova", "Klementova", "Farkasova", "Kleinova", "Hruskova",
     "Sokolova", "Baranova", "Rothova", "Hlavacova", "Polakova",
-    "Molnarova", "Balazova", "Kadlecova", "Nemcova", "Pavlikova",
-    "Blahova", "Svobodova", "Dvorakova", "Kratochvilova", "Sedlakova",
-    "Benkova", "Bartosova2", "Chovancova", "Jelinekova", "Kolarova",
-    "Kostkova", "Mikulasova", "Zemanova", "Stankova", "Krizova",
-    "Krejcova", "Pokorna", "Vesela", "Prochazkova", "Holubova",
-    "Ruzickova", "Rybarova", "Liskova", "Kovacikova", "Stanekova"
+    "Dvorakova", "Svobodova", "Sedlakova", "Prochazkova", "Ruzickova"
   ];
 
   //Možný pracovný úväzok
@@ -93,9 +87,9 @@ function generateEmployeeData(dtoIn) {
         continue;
       }
 
-      //Overenie veku
+      //Overenie veku (inkluzívne hranice)
       let realAge = getAgeFromDate(birthday);
-      if (realAge > minAge && realAge < maxAge) {
+      if (realAge >= minAge && realAge <= maxAge) {
         usedBirthdates.add(iso);
         return iso;
       }
@@ -282,18 +276,3 @@ function medianLowerMiddle(arr) {
   let mid = Math.floor((n - 1) / 2);
   return a[mid];
 }
-
-// =========================
-// TEST – spustenie vo VS Code
-// =========================
-
-const dtoIn = {
-  count: 50,
-  age: {
-    min: 19,
-    max: 35
-  }
-};
-
-const result = main(dtoIn);
-console.log(result);

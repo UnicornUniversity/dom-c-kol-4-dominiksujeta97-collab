@@ -2,22 +2,21 @@
 //TODO doc
 
 /**
- * The main function which calls the application.
- * Please, add specific description here for the application purpose.
- * @param {object} dtoIn contains count of employees, age limit of employees {min, max}
- * @returns {object} containing the statistics
+ * Hlavná funkcia na vytvorenie zoznamu zamestnancov a štatistík
+ * @param {object} dtoIn vstupné dáta obsahujúce počet zamestnancov, vekový limit {min, max}
+ * @returns {object} statistické údaje o zamestnancoch
  */
 export function main(dtoIn) {
   //Hlavná funkcia na vytvorenie zoznamu zamestnancov
-  let employees = generateEmployeeData(dtoIn);
-  let dtoOut = getEmployeeStatistics(employees);
-  return dtoOut;
+  let employees = generateEmployeeData(dtoIn); // generujeme zoznam zamestnancov
+  let dtoOut = getEmployeeStatistics(employees); // získavame štatistiky zamestnancov
+  return dtoOut; // vraciame štatistiky
 }
 
 /**
- * Please, add specific description here
- * @param {object} dtoIn contains count of employees, age limit of employees {min, max}
- * @returns {Array} of employees
+ * Funkcia na generovanie náhodných dát zamestnancov
+ * @param {object} dtoIn obsahujúci počet zamestnancov, vekový limit {min, max}
+ * @returns {Array} pole zamestnancov
  */
 export function generateEmployeeData(dtoIn) {
   //Počet zamestnancov, ktorý vytvárame
@@ -27,7 +26,7 @@ export function generateEmployeeData(dtoIn) {
   let ageMin = dtoIn.age.min;
   let ageMax = dtoIn.age.max;
 
-  //Zoznam náhodných mien
+  //Zoznam náhodných mužských/ženských mien
   let names = [
     "Peter","Martin","Jakub","Samuel","Lukas","Michal","Adam","Tomas","Matej","Dominik",
     "Filip","Patrik","Andrej","Daniel","Erik","Oliver","Marek","Sebastian","Viktor","Roman",
@@ -36,7 +35,7 @@ export function generateEmployeeData(dtoIn) {
     "Eva","Maria","Barbora","Petra","Simona","Nikola","Tamara","Viktoria","Paulina","Lenka"
   ];
 
-  //Zoznam náhodných priezvisk
+  //Zoznam náhodných mužských/ženských priezvisk
   let surnames = [
     "Novak","Kovac","Horvath","Varga","Toth","Kucera","Marek","Bartok","Urban","Simek",
     "Kral","Klement","Farkas","Klein","Hruska","Sokol","Baran","Roth","Hlavac","Polak",
@@ -47,7 +46,7 @@ export function generateEmployeeData(dtoIn) {
     "Sokolova","Baranova","Rothova","Hlavacova","Polakova"
   ];
 
-  //Možný pracovný úväzok
+  //Možný pracovný úväzok (v hodinách)
   let workloads = [10, 20, 30, 40];
 
   //Pomocná funkcia pre náhodný výber z poľa
@@ -57,7 +56,7 @@ export function generateEmployeeData(dtoIn) {
 
   //Vytvorenie unikátnych dátumov narodenia
   function buildUniqueBirthdates(count, minAge, maxAge) {
-    let today = new Date();
+    let today = new Date(); //dnešný dátum (polnoc)
     today.setUTCHours(0, 0, 0, 0);
 
     let from = new Date(today);
@@ -71,7 +70,6 @@ export function generateEmployeeData(dtoIn) {
       days.push(new Date(d).toISOString());
     }
 
-    //zamiešanie dátumov
     for (let i = days.length - 1; i > 0; i--) {
       let j = Math.floor(Math.random() * (i + 1));
       [days[i], days[j]] = [days[j], days[i]];
@@ -92,7 +90,7 @@ export function generateEmployeeData(dtoIn) {
       birthdate: birthdates[i],
       name: pickRandom(names),
       surname: pickRandom(surnames),
-      workload: pickRandom(workloads)
+      workload: pickRandom(workloads) // ❗ opravená bodka
     };
 
     dtoOut.push(employee);
@@ -102,31 +100,29 @@ export function generateEmployeeData(dtoIn) {
 }
 
 /**
- * Please, add specific description here
- * @param {Array} employees containing all the mocked employee data
- * @returns {object} statistics of the employees
+ * Funkcia štatistických výpočtov zamestnancov
+ * @param {Array} employees pole zamestnancov
+ * @returns {object} štatistiky
  */
 export function getEmployeeStatistics(employees) {
   let total = employees.length;
 
-  //počty úväzkov
   let workload10 = 0;
   let workload20 = 0;
   let workload30 = 0;
   let workload40 = 0;
 
-  //vek (pracujeme s desatinným číslom)
   let sumAge = 0;
   let minAgeDec = Infinity;
   let maxAgeDec = -Infinity;
 
-  //ženy
   let sumWomenWorkload = 0;
   let countWomen = 0;
 
   let ages = [];
   let workloads = [];
 
+  // ❗ opravený blok for
   for (let e of employees) {
     if (e.workload === 10) workload10++;
     if (e.workload === 20) workload20++;
@@ -148,24 +144,18 @@ export function getEmployeeStatistics(employees) {
     }
   }
 
-  //priemerný vek – 1 desatinné miesto
   let averageAge = roundTo1Decimal(sumAge / total);
-
-  //min/max vek – celé čísla
   let minAge = Math.floor(minAgeDec);
   let maxAge = Math.floor(maxAgeDec);
 
-  //mediány
   let medianAge = Math.floor(medianClassic(ages));
   let medianWorkload = medianClassic(workloads);
 
-  //priemer úväzku žien
   let averageWomenWorkload = 0;
   if (countWomen > 0) {
     averageWomenWorkload = roundTo1Decimal(sumWomenWorkload / countWomen);
   }
 
-  //zoradenie podľa workload
   let sortedByWorkload = employees.slice().sort((a, b) => a.workload - b.workload);
 
   return {
@@ -199,11 +189,12 @@ function getAgeFromIsoDecimal(iso) {
   return (today - birth) / (365.25 * 24 * 60 * 60 * 1000);
 }
 
+//zaokrúhlenie na 1 desatinné miesto
 function roundTo1Decimal(x) {
   return Math.round(x * 10) / 10;
 }
 
-//medián (pri párnom = priemer dvoch stredných)
+//výpočet mediánu (pri párnom = priemer dvoch stredných)
 function medianClassic(arr) {
   let a = arr.slice().sort((x, y) => x - y);
   let mid = Math.floor(a.length / 2);

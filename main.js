@@ -91,7 +91,7 @@ export function generateEmployeeData(dtoIn) {
 
 // Vytváranie štatistík zamestnancov - úloha č. 4
 export function getEmployeeStatistics(employees) {
- 
+
   let total = employees.length;
 
   // počty úväzkov za týždeň
@@ -143,8 +143,8 @@ export function getEmployeeStatistics(employees) {
   averageAge = roundTo1Decimal(averageAge);
 
   // min/max vek 
-  minAge = Math.round(minAge);
-  maxAge = Math.round(maxAge);
+  minAge = Math.floor(minAge);
+  maxAge = Math.floor(maxAge);
 
   // median veku 
   let medianAge = medianClassic(ages);

@@ -59,25 +59,31 @@ export function generateEmployeeData(dtoIn) {
     let today = new Date(); //dnešný dátum (polnoc)
     today.setUTCHours(0, 0, 0, 0);
 
+    //najstarší povolený dátum narodenia
     let from = new Date(today);
     from.setUTCFullYear(from.getUTCFullYear() - maxAge);
 
+    //najmladší povolený dátum narodenia
     let to = new Date(today);
     to.setUTCFullYear(to.getUTCFullYear() - minAge);
 
+    //vytvorenie všetkých možných dátumov v rozsahu
     let days = [];
     for (let d = new Date(from); d <= to; d.setUTCDate(d.getUTCDate() + 1)) {
       days.push(new Date(d).toISOString());
     }
 
+    //zamiešanie dátumov
     for (let i = days.length - 1; i > 0; i--) {
       let j = Math.floor(Math.random() * (i + 1));
       [days[i], days[j]] = [days[j], days[i]];
     }
 
+    //vrátenie požadovaného počtu dátumov
     return days.slice(0, count);
   }
 
+  //Vytvorenie unikátnych dátumov narodenia pre všetkých zamestnancov
   let birthdates = buildUniqueBirthdates(count, ageMin, ageMax);
   let dtoOut = [];
 
@@ -87,15 +93,17 @@ export function generateEmployeeData(dtoIn) {
 
     let employee = {
       gender: gender,
-      birthdate: birthdates[i],
-      name: pickRandom(names),
-      surname: pickRandom(surnames),
-      workload: pickRandom(workloads) // ❗ opravená bodka
+      birthdate: birthdates[i],        //priradenie unikátneho dátumu narodenia
+      name: pickRandom(names),         //náhodné meno
+      surname: pickRandom(surnames),   //náhodné priezvisko
+      workload: pickRandom(workloads)  //náhodný úväzok
     };
 
+    //Pridanie zamestnanca do výstupného poľa
     dtoOut.push(employee);
   }
 
+  //Vrátenie poľa zamestnancov
   return dtoOut;
 }
 
@@ -105,59 +113,77 @@ export function generateEmployeeData(dtoIn) {
  * @returns {object} štatistiky
  */
 export function getEmployeeStatistics(employees) {
+
+  //celkový počet zamestnancov
   let total = employees.length;
 
+  //počty jednotlivých úväzkov
   let workload10 = 0;
   let workload20 = 0;
   let workload30 = 0;
   let workload40 = 0;
 
+  //minimálny a maximálny vek (pracujeme s desatinným číslom)
   let sumAge = 0;
   let minAgeDec = Infinity;
   let maxAgeDec = -Infinity;
 
+  // údaje o ženách pre výpočet priemerného úväzku
   let sumWomenWorkload = 0;
   let countWomen = 0;
 
+  // polia pre výpočet potrebných mediánov
   let ages = [];
   let workloads = [];
 
-  // ❗ opravený blok for
+  // cyklus cez všetkých zamestnancov
   for (let e of employees) {
+
+    // počítanie jednotlivých úväzkov
     if (e.workload === 10) workload10++;
     if (e.workload === 20) workload20++;
     if (e.workload === 30) workload30++;
     if (e.workload === 40) workload40++;
 
+    // výpočet veku z dátumu narodenia
     let age = getAgeFromIsoDecimal(e.birthdate);
 
     sumAge += age;
     ages.push(age);
     workloads.push(e.workload);
 
+    // aktualizácia min/max vek
     if (age < minAgeDec) minAgeDec = age;
     if (age > maxAgeDec) maxAgeDec = age;
 
+    // údaje o ženách pre výpočet priemerného úväzku
     if (e.gender === "female") {
       sumWomenWorkload += e.workload;
       countWomen++;
     }
   }
 
+  //priemerný vek – 1 desatinné miesto
   let averageAge = roundTo1Decimal(sumAge / total);
+
+  //min/max vek – celé čísla
   let minAge = Math.floor(minAgeDec);
   let maxAge = Math.floor(maxAgeDec);
 
+  //mediány (vek a úväzok)
   let medianAge = Math.floor(medianClassic(ages));
   let medianWorkload = medianClassic(workloads);
 
+  //priemer úväzku žien
   let averageWomenWorkload = 0;
   if (countWomen > 0) {
     averageWomenWorkload = roundTo1Decimal(sumWomenWorkload / countWomen);
   }
 
+  //zoradenie zamestnancov podľa daného úväzku
   let sortedByWorkload = employees.slice().sort((a, b) => a.workload - b.workload);
 
+  // výstupný štatistický objekt
   return {
     total,
     workload10,
